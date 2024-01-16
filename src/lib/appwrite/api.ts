@@ -4,27 +4,31 @@ import { Databases, ID, Query } from "appwrite";
 
 
 
+
 export const createUserAccount = async (user:INewUser) => {
     
     try {
         const newAccount = await account.create(
             ID.unique(),
             user.email,
-            user.name,
-            user.password
+            user.password,
+            user.name
 
 
         )
         if(!newAccount) throw Error
+
         const avaterUrl = avatars.getInitials(user.name)
+
         const newUser = await saveUserToDB({
             accountId:newAccount.$id,
-            email:newAccount.email,
             name:newAccount.name,
+            email:newAccount.email,
             username: user.username,
             imageUrl: avaterUrl
 
         })
+
         return newUser
         
     } catch (error) {
@@ -71,6 +75,17 @@ export const signInAccount = async (user: {email:string ; password:string} ) => 
     }
 
 }
+export const signOutAccount = async () => {
+    try {
+        const session = await account.deleteSession('current')
+        return session
+        
+    } catch (error) {
+        console.log(error)
+        
+    }
+
+}
 
 export const getCurrentUser = async () => {
     try {
@@ -90,5 +105,10 @@ export const getCurrentUser = async () => {
         console.log(error)
         
     }
+
+}
+
+export const CreateNewPost = async () => {
+    
 
 }

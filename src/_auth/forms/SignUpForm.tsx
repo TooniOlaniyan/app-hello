@@ -37,32 +37,45 @@ const SignUpForm = () => {
   const navigate = useNavigate()
 
   const {checkAuthUser } = useUserContext()
-  async function onSubmit(values: z.infer<typeof signupValidation>) {
-    //create user
-    // setisLoading(true)
-    const newUser = await createUserAccount(values)
-    if(!newUser){
-      return toast({
-        title: "Sign up failed please try again",
+
+  const handleSignup = async (user: z.infer<typeof signupValidation>) => {
+    try {
+      const newUser = await createUserAccount(user);
+
+      if (!newUser) {
+        toast({ title: "Sign up failed. Please try again." });
+
+        return;
+      }
+
+      const session = await signInAccount({
+        email: user.email,
+        password: user.password,
       });
+
+      if (!session) {
+        toast({ title: "Something went wrong. Please login your new account" });
+
+        navigate("/sign-in");
+
+        return;
+      }
+
+      const isLoggedIn = await checkAuthUser();
+
+      if (isLoggedIn) {
+        form.reset();
+
+        navigate("/");
+      } else {
+        toast({ title: "Login failed. Please try again." });
+
+        return;
+      }
+    } catch (error) {
+      console.log({ error });
     }
-    const session = await signInAccount({
-      email:values.email,
-      password: values.password
-    })
-    if(!session){
-      return toast({
-        title: 'Sign in failed'
-      })
-    }
-    const isLoggedIn = await checkAuthUser()
-    if(isLoggedIn){
-      form.reset()
-      navigate('/')
-    } else{
-      return toast({title: 'Sign iN failed'})
-    }
-  }
+  };
   return (
     <Form {...form}>
       <div className="sm:w-420 flex-center flex-col">
@@ -74,7 +87,7 @@ const SignUpForm = () => {
           To use snapgram , enter your details
         </p>
         <form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(handleSignup)}
           className="flex flex-col gap-5 w-full mt-4"
         >
           <FormField
@@ -83,6 +96,19 @@ const SignUpForm = () => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input type="text" className="shad-input" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Username</FormLabel>
                 <FormControl>
                   <Input type="text" className="shad-input" {...field} />
                 </FormControl>
@@ -103,19 +129,7 @@ const SignUpForm = () => {
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="username"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Username</FormLabel>
-                <FormControl>
-                  <Input type="text" className="shad-input" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+
           <FormField
             control={form.control}
             name="password"
