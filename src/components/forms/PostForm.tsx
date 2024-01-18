@@ -15,6 +15,10 @@ import { Textarea } from "../ui/textarea";
 import FileUploader from "../shared/FileUploader";
 import { postValidation } from "@/lib/validation";
 import { Models } from "appwrite";
+import { useCreateNewPostMutation } from "@/lib/react-query/queriesAndMutations";
+import { useUserContext } from "@/context/AuthContext";
+import { useToast } from "../ui/use-toast";
+import { useNavigate } from "react-router-dom";
 
 
 type PostFormProps = {
@@ -31,11 +35,31 @@ const PostForm = ({post} : PostFormProps) => {
       tags:post ? post?.tags.join(',') : '',
     },
   });
+  const {mutateAsync: createPost , isPending: isLoadingCreate} = useCreateNewPostMutation()
+  const {user} = useUserContext()
+  const {toast} = useToast()
+  const navigate = useNavigate()
 
 
   const handlePostSubmit = async (values: z.infer<typeof postValidation>) => {
-    console.log('done')
-  };
+    try {
+      const newPost = await createPost({
+        ...values,
+        userId: user.id
+        
+      })
+      if(!newPost){
+        toast({
+          title: 'Please try again'
+        })
+      }
+      navigate('/')
+      
+    } catch (error) {
+      console.log(error)
+      
+    }
+  }
 
 
   return (
